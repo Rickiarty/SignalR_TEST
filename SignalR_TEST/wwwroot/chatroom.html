@@ -1,0 +1,84 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>薬屋のひとりごと</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0 auto;
+            max-width: 800px;
+            padding: 20px;
+        }
+
+        .message {
+            color: #000;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+            .message p {
+                margin: 0;
+            }
+
+            .message time {
+                color: #999;
+            }
+    </style>
+</head>
+<body>
+    <h2>薬屋のひとりごと</h2>
+    <input type="text" id="messageInput" placeholder="Enter message..." />
+    <input type="button" id="sendButton" value="Send" />
+    <div id="messageList"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/3.1.7/signalr.min.js"></script>
+    <script>
+        let nicknames = [
+            '貓貓',
+            '壬氏',
+            '瑟瑟',
+            '里樹妃',
+            '玉葉妃',
+            '阿多妃',
+            '梨花妃',
+            '高順',
+            '李白',
+            '老爹',
+            'マオマオ',
+            '猫猫',
+        ];
+        let index = Math.floor(Math.random() * nicknames.length);
+
+        var connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
+
+        // Disable send button until connection is established
+        document.getElementById("sendButton").disabled = true;
+
+        connection.on("ReceiveMessage", function (user, message) {
+            var msg = document.createElement("div");
+            msg.classList.add("message");
+            msg.innerHTML = "<p><strong>" + user + ":</strong> " + message + "</p><time>" + new Date().toLocaleTimeString() + "</time>";
+            document.getElementById("messageList").appendChild(msg);
+            window.scrollTo(0, document.body.scrollHeight);
+        });
+
+        connection.start().then(function () {
+            document.getElementById("sendButton").disabled = false;
+        }).catch(function (err) {
+            return console.error(err.toString());
+        });
+
+        document.getElementById("sendButton").addEventListener("click", function (event) {
+            var user = nicknames[index];
+            var message = document.getElementById("messageInput").value;
+            connection.invoke("SendMessage", user, message).catch(function (err) {
+                return console.error(err.toString());
+            });
+            event.preventDefault();
+            document.getElementById("messageInput").value = "";
+        });
+    </script>
+</body>
+</html>
